@@ -19,6 +19,7 @@ import {
   getSingleEvent,
   updateEvent,
   deleteEvent,
+  subscribeEventControl,
 } from '../controllers/events';
 
 
@@ -55,6 +56,8 @@ apiRouter.get('/events', getEvents);
 apiRouter.get('/events/:id', getSingleEvent);
 
 apiRouter.post('/events', createEvent);
+
+apiRouter.post('/events/subscribe', subscribeEventControl);
 
 apiRouter.put('/events/:id', updateEvent);
 

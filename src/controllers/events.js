@@ -132,3 +132,34 @@ export const deleteEvent = (req, res) => {
     });
   });
 };
+
+export const subscribeEventControl = (req, res) => {
+  const { userId, eventId } = req.body;
+  const userEventsSubscribe = {
+    user_id: userId,
+    event_id: eventId,
+  };
+  const getUserEventsPromise = () => knex('users_events').select('*').where(userEventsSubscribe);
+
+  getUserEventsPromise().then((result) => {
+    if(_.isEmpty(result)) {
+      knex('users_events').insert(userEventsSubscribe).then(() => {
+        res.json({
+          isSubscribe: true,
+        });
+      });
+    } else {
+      getUserEventsPromise().del().then(() => {
+        res.json({
+          isSubscribe: false,
+        });
+      });
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json({
+      error: err,
+    });
+  });
+};

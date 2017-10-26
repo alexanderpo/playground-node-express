@@ -69,8 +69,10 @@ export const userFavoritePlaygroundControl = (req, res) => {
     user_id: userId,
     playground_id: playgroundId,
   };
-  knex('users_favorite_playgrounds').select('*')
-  .where(userFavoritePlayground).then((result) => {
+  const userFavoritesPromise = () => knex('users_favorite_playgrounds').select('*')
+  .where(userFavoritePlayground);
+
+  userFavoritesPromise().then((result) => {
     if(_.isEmpty(result)) {
       knex('users_favorite_playgrounds').insert(userFavoritePlayground).then(() => {
         res.json({
@@ -78,8 +80,7 @@ export const userFavoritePlaygroundControl = (req, res) => {
         });
       });
     } else {
-      knex('users_favorite_playgrounds').select('*')
-      .where(userFavoritePlayground).del().then(() => {
+      userFavoritesPromise().del().then(() => {
         res.json({
           isFavorite: false,
         });
