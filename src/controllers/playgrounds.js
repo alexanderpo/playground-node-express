@@ -100,16 +100,20 @@ export const updatePlayground = (req, res) => {
   };
 
   if (_.isEmpty(validateResult)) {
-    knex.select('*').from('playgrounds').where('id', id).update(data).then((count) => {
-      if (count !== 0) {
-        res.json({
-          message: `Updated ${count} playground `,
-        });
+    knex.first('*').from('playgrounds').where('id', id).update(data).returning('*').then((playground) => {
+      if (!_.isEmpty(playground)) {
+        res.json(playground);
       } else {
         res.json({
           warning: 'Nothing to update',
         });
       }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({
+        error: err,
+      });
     });
   } else {
     res.json({

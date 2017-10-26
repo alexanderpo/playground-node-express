@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { signIn, signUp } from '../controllers/sign';
 import {
+  updateUserProfile,
+  getUserEvents,
+  userFavoritePlaygroundControl,
+  getUserFavoritePlaygrounds,
+} from '../controllers/users';
+import {
   getPlaygrounds,
   getSinglePlayground,
   createPlayground,
@@ -24,21 +30,13 @@ apiRouter.post('/signin', signIn);
 apiRouter.post('/signup', signUp);
 
 /* Users routes */
-apiRouter.put('/users/:id', (req, res) => {
-  res.send('update user profile');
-});
+apiRouter.put('/users/:id', updateUserProfile);
 
-apiRouter.get('/users/:id/events', (req, res) => {
-  res.send('get users events');
-});
+apiRouter.get('/users/:id/events', getUserEvents);
 
-apiRouter.post('/users/favorite/playgrounds', (req, res) => {
-  res.send('added playground to favorite');
-});
+apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 
-apiRouter.get('/users/:id/favorite/playgrounds', (req, res) => {
-  res.send('get user favorite playgrounds');
-});
+apiRouter.get('/users/:id/favorite/playgrounds', getUserFavoritePlaygrounds);
 
 /* Playgrounds routes */
 apiRouter.get('/playgrounds', getPlaygrounds);

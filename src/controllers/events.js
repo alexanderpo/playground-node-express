@@ -95,11 +95,9 @@ export const updateEvent = (req, res) => {
   };
 
   if (_.isEmpty(validateResult)) {
-    knex.select('*').from('events').where('id', id).update(data).then((count) => {
-      if (count !== 0) {
-        res.json({
-          message: `Update ${count} events `,
-        });
+    knex.first('*').from('events').where('id', id).update(data).returning('*').then((event) => {
+      if (!_.isEmpty(event)) {
+        res.json(event);
       } else {
         res.json({
           warning: 'Nothing to update',
