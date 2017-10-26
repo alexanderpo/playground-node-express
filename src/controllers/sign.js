@@ -48,7 +48,7 @@ export const signIn = (req, res) => {
 };
 
 export const signUp = (req, res) => {
-  const { email, password, repeatPassword } = req.body;
+  const { name, email, phone, password, repeatPassword } = req.body;
   const values = { email, password, repeatPassword };
   const validateResult = validate(signUpSchema, values);
   console.log('RESULT ' + validateResult);
@@ -57,10 +57,10 @@ export const signUp = (req, res) => {
       if(_.isEmpty(users)) {
         const hash = bcrypt.hashSync(password, 10);
         const newUser = {
-          name: 'user',
+          name: name,
           email: email,
           hash: hash,
-          phone: '+000(00)000-00-00',
+          phone: phone,
           created_at: new Date(),
           updated_at: new Date(),
         };

@@ -4,14 +4,14 @@ import knex from '../../config';
 import { updateUserProfileSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
-export const updateUserProfile = (req, res) => {
+export const updateUserProfile = async (req, res) => {
   const id = req.params.id;
   const { name, phone, image, password, isPasswordChange } = req.body;
   const values = { name, phone, image, password };
   const validateResult = validate(updateUserProfileSchema, values);
 
-  const oldHash = knex.first('hash').from('users').where('id', id);
-  const newHash = isPasswordChange ? bcrypt.hashSync(password, 10) : oldHash;
+  const oldHash = await knex.first('hash').from('users').where('id', id);
+  const newHash = (isPasswordChange === true) ? bcrypt.hashSync(password, 10) : oldHash.hash;
 
   const data = {
     name: name,
@@ -111,12 +111,12 @@ export const getUserFavoritePlaygrounds = (req, res) => {
           warning: 'You don\'t have favorite playgrounds',
         });
       }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.json({
-        error: err,
-      });
+    });
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json({
+      error: err,
     });
   });
 };
