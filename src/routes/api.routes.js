@@ -3,7 +3,7 @@ import { signIn, signUp } from '../controllers/sign';
 import {
   updateUserProfile,
   getUserEvents,
-  addToUserFavoritePlayground,
+  userFavoritePlaygroundControl,
   getUserFavoritePlaygrounds,
 } from '../controllers/users';
 import {
@@ -34,7 +34,7 @@ apiRouter.put('/users/:id', updateUserProfile);
 
 apiRouter.get('/users/:id/events', getUserEvents);
 
-apiRouter.post('/users/favorite/playgrounds', addToUserFavoritePlayground);
+apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 
 apiRouter.get('/users/:id/favorite/playgrounds', getUserFavoritePlaygrounds);
 
