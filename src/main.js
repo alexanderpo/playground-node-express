@@ -12,7 +12,7 @@ app.use(bodyParser.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(morgan('dev'));
 
-app.use('/api', apiRoutes);
+app.use('/api/v1', apiRoutes);
 
 app.listen(port);
 
