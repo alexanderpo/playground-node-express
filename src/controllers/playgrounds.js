@@ -122,24 +122,36 @@ export const updatePlayground = (req, res) => {
   }
 };
 
-export const deletePlayground = (req, res) => {
+export const deletePlayground = async (req, res) => {
   const id = req.params.id;
-
-  knex.first('*').from('playgrounds').where('id', id).del().then((count) => {
-    if (count !== 0) {
-      res.json({
-        message: `Delete ${count} playground`,
-      });
-    } else {
-      res.json({
-        warning: 'Nothing to delete',
-      });
-    }
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json({
-      error: err,
-    });
+  const getEventsQuery = knex.select().from('events').where('playground_id', id);
+  const isIncludeEventsPlayground = await getEventsQuery.then((result) => {
+    if (_.isEmpty(result)) { return false; } else { return true; }
   });
+  const deleteUserFavoritePromise = (id) => knex.select('*').from('users_favorite_playgrounds').where('playground_id', id).del();
+  const deletePlaygroundPromise = (id) => knex.first('*').from('playgrounds').where('id', id).del();
+
+  if (isIncludeEventsPlayground) {
+    res.json({
+      warning: 'You can\'t remove this playground because it\'s in event',
+    });
+  } else {
+    Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
+      if (!_.isEmpty(result)) {
+        res.json({
+          message: 'Successfully deleted',
+        });
+      } else {
+        res.json({
+          warning: 'Nothing to delete',
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({
+        error: err,
+      });
+    });
+  }
 };

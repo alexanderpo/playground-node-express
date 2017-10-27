@@ -22,7 +22,6 @@ import {
   subscribeEventControl,
 } from '../controllers/events';
 
-
 const apiRouter = Router();
 
 /* Sign routes */
