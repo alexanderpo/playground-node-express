@@ -137,7 +137,7 @@ export const deletePlayground = async (req, res) => {
     });
   } else {
     Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
-      if (!_.isEmpty(result)) {
+      if (result[1] !== 0 ) {
         res.json({
           message: 'Successfully deleted',
         });
