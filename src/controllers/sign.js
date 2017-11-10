@@ -7,6 +7,7 @@ import { validate } from '../utils/validation';
 
 export const signIn = (req, res) => {
   const { email, password } = req.body;
+
   const values = { email, password };
   const validateResult = validate(signInSchema, values);
 
@@ -23,35 +24,35 @@ export const signIn = (req, res) => {
             });
             res.json(userWithToken);
           } else {
-            res.json({
+            res.status(400).json({
               error: 'Wrong password',
             });
           }
         });
       } else {
-        res.json({
-          warning: 'User doesn\'t exist',
+        res.status(400).json({
+          error: 'User doesn\'t exist',
         });
       }
     })
     .catch((err) => {
       console.log(err);
-      res.json({
+      res.status(500).json({
         error: err,
       });
     });
   } else {
-    res.json({
-      warning: validateResult,
+    res.status(400).json({
+      error: validateResult,
     });
   }
 };
 
 export const signUp = (req, res) => {
-  const { name, email, phone, password, repeatPassword } = req.body;
-  const values = { email, password, repeatPassword };
+  const { name, email, phone, password, rePassword } = req.body;
+  const values = { email, password, rePassword };
   const validateResult = validate(signUpSchema, values);
-  console.log('RESULT ' + validateResult);
+
   if (_.isEmpty(validateResult)) {
     knex.select('*').from('users').where('email', email).then((users) => {
       if(_.isEmpty(users)) {
@@ -65,23 +66,23 @@ export const signUp = (req, res) => {
           updated_at: new Date(),
         };
         knex.insert(newUser).into('users').returning('*').then((user) => {
-          res.json(user);
+          res.json(user[0]);
         });
       } else {
         res.json({
-          warning: 'This email already used',
+          error: 'This email already used',
         });
       }
     })
     .catch((err) => {
       console.log(err);
-      res.json({
+      res.status(500).json({
         error: err,
       });
     });
   } else {
-      res.json({
-        warning: validateResult,
+      res.status(400).json({
+        error: validateResult,
       });
   }
 

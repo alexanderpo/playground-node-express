@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import apiRoutes from './routes/api.routes';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
 app.use(bodyParser.json({ limit: '2mb' }));
