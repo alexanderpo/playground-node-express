@@ -75,7 +75,7 @@ export const getEvents = (req, res) => {
         'users.phone as creator_phone',
       )
       .then((data) => {
-          res.json(data);
+          res.status(200).json(data);
         });
     }
   })
@@ -104,6 +104,7 @@ export const getSingleEvent = (req, res) => {
         'events.created_at as event_created_at',
       )
       .where('events.id', id)
+      .groupBy('events.id')
       .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
       .select(
         'playgrounds.id as playground_id',
@@ -115,6 +116,7 @@ export const getSingleEvent = (req, res) => {
         'playgrounds.longitude as playground_longitude',
         'playgrounds.creator as playground_creator',
       )
+      .groupBy('playgrounds.id')
       .innerJoin('users','creator_id', 'users.id' )
       .select(
         'users.id as creator_id',
@@ -123,8 +125,11 @@ export const getSingleEvent = (req, res) => {
         'users.image as creator_image',
         'users.phone as creator_phone',
       )
+      .groupBy('users.id')
+      .leftJoin('users_events', 'events.id', 'users_events.event_id')
+      .count('user_id as subscribed_users')
       .then((data) => {
-          res.json(data);
+          res.status(200).json([data]);
         });
     }
   })
@@ -196,21 +201,24 @@ export const subscribeEventControl = (req, res) => {
     user_id: userId,
     event_id: eventId,
   };
-  const getUserEventsPromise = () => knex('users_events').select('*').where(userEventsSubscribe);
 
-  getUserEventsPromise().then((result) => {
+  const getUserEvents = () => knex('users_events').select('*').where(userEventsSubscribe);
+  const getEventSubscribers = () => knex('users_events').select('event_id').where('user_id', userId);
+
+  const sendEventSubscribers = () => {
+    getEventSubscribers().then((events) => {
+      const subscribedEvents = events.map(event => event.event_id);
+      res.json({
+        subscribedEvents: subscribedEvents,
+      });
+    });
+  };
+
+  getUserEvents().then((result) => {
     if(_.isEmpty(result)) {
-      knex('users_events').insert(userEventsSubscribe).then(() => {
-        res.json({
-          isSubscribe: true,
-        });
-      });
+      knex('users_events').insert(userEventsSubscribe).then(() => { sendEventSubscribers(); });
     } else {
-      getUserEventsPromise().del().then(() => {
-        res.json({
-          isSubscribe: false,
-        });
-      });
+      getUserEvents().del().then(() => { sendEventSubscribers(); });
     }
   })
   .catch((err) => {

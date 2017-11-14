@@ -16,13 +16,17 @@ export const signIn = (req, res) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            const token = jwt.sign({
-              user: user.email,
-            }, 'qweqweqweqweqweqweq');
-            const userWithToken = Object.assign({}, user, {
-              token: token,
+            knex('users_events').select('event_id').where('user_id', user.id)
+            .then((events) => {
+              const token = jwt.sign({
+                user: user.email,
+              }, 'qweqweqweqweqweqweq');
+              const userWithToken = Object.assign({}, user, {
+                subscribedEvents: events.map((event) => event.event_id),
+                token: token,
+              });
+              res.json(userWithToken);
             });
-            res.json(userWithToken);
           } else {
             res.status(400).json({
               error: 'Wrong password',
