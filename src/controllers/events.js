@@ -194,37 +194,3 @@ export const deleteEvent = (req, res) => {
     });
   });
 };
-
-export const subscribeEventControl = (req, res) => {
-  const { userId, eventId } = req.body;
-  const userEventsSubscribe = {
-    user_id: userId,
-    event_id: eventId,
-  };
-
-  const getUserEvents = () => knex('users_events').select('*').where(userEventsSubscribe);
-  const getEventSubscribers = () => knex('users_events').select('event_id').where('user_id', userId);
-
-  const sendEventSubscribers = () => {
-    getEventSubscribers().then((events) => {
-      const subscribedEvents = events.map(event => event.event_id);
-      res.json({
-        subscribedEvents: subscribedEvents,
-      });
-    });
-  };
-
-  getUserEvents().then((result) => {
-    if(_.isEmpty(result)) {
-      knex('users_events').insert(userEventsSubscribe).then(() => { sendEventSubscribers(); });
-    } else {
-      getUserEvents().del().then(() => { sendEventSubscribers(); });
-    }
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json({
-      error: err,
-    });
-  });
-};

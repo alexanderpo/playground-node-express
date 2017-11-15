@@ -4,6 +4,7 @@ import {
   updateUserProfile,
   getUserEvents,
   userFavoritePlaygroundControl,
+    subscribeEventControl,
   getUserFavoritePlaygrounds,
 } from '../controllers/users';
 import {
@@ -19,7 +20,6 @@ import {
   getSingleEvent,
   updateEvent,
   deleteEvent,
-  subscribeEventControl,
 } from '../controllers/events';
 
 const apiRouter = Router();
@@ -33,6 +33,8 @@ apiRouter.post('/signup', signUp);
 apiRouter.put('/users/:id', updateUserProfile);
 
 apiRouter.get('/users/:id/events', getUserEvents);
+
+apiRouter.post('/users/events/subscribe', subscribeEventControl);// TODO: move to users routes
 
 apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 
@@ -55,8 +57,6 @@ apiRouter.get('/events', getEvents);
 apiRouter.get('/events/:id', getSingleEvent);
 
 apiRouter.post('/events', createEvent);
-
-apiRouter.post('/events/subscribe', subscribeEventControl);
 
 apiRouter.put('/events/:id', updateEvent);
 
