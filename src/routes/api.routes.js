@@ -4,7 +4,7 @@ import {
   updateUserProfile,
   getUserEvents,
   userFavoritePlaygroundControl,
-    subscribeEventControl,
+  subscribeEventControl,
   getUserFavoritePlaygrounds,
 } from '../controllers/users';
 import {
@@ -34,7 +34,7 @@ apiRouter.put('/users/:id', updateUserProfile);
 
 apiRouter.get('/users/:id/events', getUserEvents);
 
-apiRouter.post('/users/events/subscribe', subscribeEventControl);// TODO: move to users routes
+apiRouter.post('/users/events/subscribe', subscribeEventControl);
 
 apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 

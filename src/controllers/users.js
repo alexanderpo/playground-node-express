@@ -63,38 +63,6 @@ export const getUserEvents = (req, res) => {
   });
 };
 
-export const userFavoritePlaygroundControl = (req, res) => {
-  const { userId, playgroundId } = req.body;
-  const userFavoritePlayground = {
-    user_id: userId,
-    playground_id: playgroundId,
-  };
-  const userFavoritesPromise = () => knex('users_favorite_playgrounds').select('*')
-  .where(userFavoritePlayground);
-
-  userFavoritesPromise().then((result) => {
-    if(_.isEmpty(result)) {
-      knex('users_favorite_playgrounds').insert(userFavoritePlayground).then(() => {
-        res.json({
-          isFavorite: true,
-        });
-      });
-    } else {
-      userFavoritesPromise().del().then(() => {
-        res.json({
-          isFavorite: false,
-        });
-      });
-    }
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json({
-      error: err,
-    });
-  });
-};
-
 export const getUserFavoritePlaygrounds = (req, res) => {
   const id = req.params.id;
 
@@ -113,6 +81,41 @@ export const getUserFavoritePlaygrounds = (req, res) => {
         });
       }
     });
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json({
+      error: err,
+    });
+  });
+};
+
+export const userFavoritePlaygroundControl = (req, res) => {
+  const { userId, playgroundId } = req.body;
+  const userFavoritePlayground = {
+    user_id: userId,
+    playground_id: playgroundId,
+  };
+
+  const getFavoritePlaygrounds = () => knex('users_favorite_playgrounds').select('*')
+  .where(userFavoritePlayground);
+  const getUserFavoritePlaygrounds = () => knex('users_favorite_playgrounds').select('playground_id').where('user_id', userId);
+
+  const sendUserFavoritePlaygrounds = () => {
+    getUserFavoritePlaygrounds().then((playgrounds) => {
+      const favoritePlaygrounds = playgrounds.map(playground => playground.playground_id);
+      res.json({
+        favoritePlaygrounds: favoritePlaygrounds,
+      });
+    });
+  };
+
+  getFavoritePlaygrounds().then((result) => {
+    if(_.isEmpty(result)) {
+      knex('users_favorite_playgrounds').insert(userFavoritePlayground).then(() => { sendUserFavoritePlaygrounds(); });
+    } else {
+      getFavoritePlaygrounds().del().then(() => { sendUserFavoritePlaygrounds(); });
+    }
   })
   .catch((err) => {
     console.log(err);

@@ -16,17 +16,32 @@ export const signIn = (req, res) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            knex('users_events').select('event_id').where('user_id', user.id)
-            .then((events) => {
-              const token = jwt.sign({
-                user: user.email,
-              }, 'qweqweqweqweqweqweq');
-              const userWithToken = Object.assign({}, user, {
-                subscribedEvents: events.map((event) => event.event_id),
-                token: token,
+            const getUserSubscribedEvents = () => knex('users_events').select('event_id').where('user_id', user.id);
+            const getUserFavoritePlaygrounds = () => knex('users_favorite_playgrounds')
+              .select('playground_id').where('user_id', user.id);
+
+            Promise.all([getUserSubscribedEvents(), getUserFavoritePlaygrounds()]).then((result) => {
+                const token = jwt.sign({
+                  user: user.email,
+                }, 'qweqweqweqweqweqweq');
+
+                const subscribedEvents = result[0].map((event) => event.event_id);
+                const favoritePlaygrounds = result[1].map((playground) => playground.playground_id);
+
+                const userWithToken = Object.assign({}, user, {
+                  subscribedEvents: subscribedEvents,
+                  favoritePlaygrounds: favoritePlaygrounds,
+                  token: token,
+                });
+                res.status(200).json(userWithToken);
+            })
+            .catch((err) => {
+              console.log(err);
+              res.status(500).json({
+                error: err,
               });
-              res.json(userWithToken);
             });
+
           } else {
             res.status(400).json({
               error: 'Wrong password',
