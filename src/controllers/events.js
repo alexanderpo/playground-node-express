@@ -75,7 +75,8 @@ export const getEvents = (req, res) => {
         'users.phone as creator_phone',
       )
       .then((data) => {
-          res.status(200).json(data);
+          const sortedData = _.sortBy(data, (item) => { return item.event_datetime; }).reverse();
+          res.status(200).json(sortedData);
         });
     }
   })
