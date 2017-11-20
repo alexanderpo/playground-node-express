@@ -73,7 +73,7 @@ export const getSinglePlayground = (req, res) => {
         warning: 'Playground does\'t exist',
       });
     } else {
-      res.json(playground);
+      res.json([playground]);
     }
   })
   .catch((err) => {

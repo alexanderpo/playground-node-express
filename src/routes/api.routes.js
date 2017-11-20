@@ -6,6 +6,7 @@ import {
   userFavoritePlaygroundControl,
   subscribeEventControl,
   getUserFavoritePlaygrounds,
+  getUpcomingEvents,
 } from '../controllers/users';
 import {
   getPlaygrounds,
@@ -35,6 +36,8 @@ apiRouter.put('/users/:id', updateUserProfile);
 apiRouter.get('/users/:id/events', getUserEvents);
 
 apiRouter.post('/users/events/subscribe', subscribeEventControl);
+
+apiRouter.get('/users/:id/events/upcoming', getUpcomingEvents);
 
 apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 

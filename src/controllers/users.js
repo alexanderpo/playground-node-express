@@ -158,3 +158,56 @@ export const subscribeEventControl = (req, res) => {
     });
   });
 };
+
+export const getUpcomingEvents = (req, res) => {
+  const userId = req.params.id;
+
+  knex('users_events').select('event_id').where('user_id', userId)
+  .then((events) => {
+    if (_.isEmpty(events)) {
+      res.status(200).json({
+        warning: 'Don\'t have upcoming events',
+      });
+    } else {
+      const eventsIds = events.map(event => event.event_id);
+      const getEvent = (id) => knex('events')
+      .first(
+        'events.id as event_id',
+        'events.datetime as event_datetime',
+        'events.title as event_title',
+        'events.created_at as event_created_at',
+      )
+      .where('events.id', id)
+      .groupBy('events.id')
+      .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
+      .select(
+        'playgrounds.id as playground_id',
+        'playgrounds.name as playground_name',
+        'playgrounds.description as playground_description',
+        'playgrounds.images as playground_images',
+        'playgrounds.address as playground_address',
+        'playgrounds.latitude as playground_latitude',
+        'playgrounds.longitude as playground_longitude',
+        'playgrounds.creator as playground_creator',
+      )
+      .groupBy('playgrounds.id')
+      .innerJoin('users','creator_id', 'users.id' )
+      .select(
+        'users.id as creator_id',
+        'users.name as creator_name',
+        'users.email as creator_email',
+        'users.image as creator_image',
+        'users.phone as creator_phone',
+      )
+      .groupBy('users.id')
+      .leftJoin('users_events', 'events.id', 'users_events.event_id')
+      .count('user_id as subscribed_users');
+
+      const eventsPromises = eventsIds.map(id => getEvent(id));
+
+      Promise.all(eventsPromises).then((result) => {
+        res.status(200).json(result);
+      });
+    }
+  });
+};
