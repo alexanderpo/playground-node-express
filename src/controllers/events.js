@@ -71,10 +71,12 @@ export const getEvents = (req, res) => {
         'users.id as creator_id',
         'users.name as creator_name',
         'users.email as creator_email',
-        'users.image as creator_image',
         'users.phone as creator_phone',
       )
       .then((data) => {
+        // вытянуть все id картинок пользователей
+        // через Promise all достать и преобразовать изображения
+        // добавить изображения к текущим данным
           const sortedData = _.sortBy(data, (item) => { return item.event_datetime; }).reverse();
           res.status(200).json(sortedData);
         });

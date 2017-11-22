@@ -7,27 +7,43 @@ import { validate } from '../utils/validation';
 export const updateUserProfile = async (req, res) => {
   const id = req.params.id;
   const { name, phone, image, password, isPasswordChange } = req.body;
-  const values = { name, phone, image, password };
+  const values = { name, phone, password, isPasswordChange };
   const validateResult = validate(updateUserProfileSchema, values);
 
   const oldHash = await knex.first('hash').from('users').where('id', id);
   const newHash = (isPasswordChange === true) ? bcrypt.hashSync(password, 10) : oldHash.hash;
 
+  const regexContentType = /^data:image\/\w+;base64,/;
+  const imageContentType = !image ? '' : regexContentType.exec(image)[0];
+  const imageContent = !image ? '' : image.replace(regexContentType, '');
+
   const data = {
     name: name,
     phone: phone,
-    image: image,
     hash: newHash,
     updated_at: new Date(),
   };
-
+// IDEA: проверить на совпадение данных и если да то вернуть сообщение что нечего изменять
   if (_.isEmpty(validateResult)) {
-    knex.first('*').from('users').where('id', id).update(data).returning('*').then((user) => {
-      if (!_.isEmpty(user)) {
-        res.json(user);
+    knex.first('*').from('users').where('id', id).update(data).returning('*').then((users) => {
+      if (!_.isEmpty(users)) {
+        const user = users[0];
+        const imageId = user.image;
+        const imageData = {
+          image: imageContent,
+          content_type: imageContentType,
+        };
+
+        knex.first('*').from('images').where('id', imageId).update(imageData).returning('*').then((images) => {
+          const newImage = images[0].content_type + images[0].image;
+          const userData = Object.assign({}, user, {
+            image: newImage,
+          });
+          res.json(userData);
+        });
       } else {
         res.json({
-          warning: 'Nothing to update',
+          error: 'Nothing to update',
         });
       }
     })
@@ -38,8 +54,8 @@ export const updateUserProfile = async (req, res) => {
       });
     });
   } else {
-    res.json({
-      warning: validateResult,
+    res.status(400).json({
+      error: validateResult,
     });
   }
 };
@@ -206,7 +222,8 @@ export const getUpcomingEvents = (req, res) => {
       const eventsPromises = eventsIds.map(id => getEvent(id));
 
       Promise.all(eventsPromises).then((result) => {
-        res.status(200).json(result);
+        const sortedData = _.sortBy(result, (item) => { return item.event_datetime; }).reverse();
+        res.status(200).json(sortedData);
       });
     }
   });
