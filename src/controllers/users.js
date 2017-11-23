@@ -30,12 +30,12 @@ export const updateUserProfile = async (req, res) => {
         const user = users[0];
         const imageId = user.image;
         const imageData = {
-          image: imageContent,
+          image_data: imageContent,
           content_type: imageContentType,
         };
 
         knex.first('*').from('images').where('id', imageId).update(imageData).returning('*').then((images) => {
-          const newImage = images[0].content_type + images[0].image;
+          const newImage = images[0].content_type + images[0].image_data;
           const userData = Object.assign({}, user, {
             image: newImage,
           });
@@ -212,10 +212,14 @@ export const getUpcomingEvents = (req, res) => {
         'users.id as creator_id',
         'users.name as creator_name',
         'users.email as creator_email',
-        'users.image as creator_image',
         'users.phone as creator_phone',
       )
       .groupBy('users.id')
+      .leftJoin('images', 'users.image', 'images.id')
+      .select(
+        knex.raw('CONCAT(images.content_type, images.image_data) as creator_image'),
+      )
+      .groupBy('images.id')
       .leftJoin('users_events', 'events.id', 'users_events.event_id')
       .count('user_id as subscribed_users');
 

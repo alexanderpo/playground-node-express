@@ -31,7 +31,7 @@ export const signIn = (req, res) => {
                 const subscribedEvents = result[0].map((event) => event.event_id);
                 const favoritePlaygrounds = result[1].map((playground) => playground.playground_id);
                 const imageContentType = result[2].map((image) => image.content_type);
-                const imageData = result[2].map((image) => image.image);
+                const imageData = result[2].map((image) => image.image_data);
                 const userImage = imageContentType + imageData;
 
                 const detailsUser = Object.assign({}, user, {
@@ -83,7 +83,7 @@ export const signUp = (req, res) => {
     knex.select('*').from('users').where('email', email).then((users) => {
       if(_.isEmpty(users)) {
         const emptyImage = {
-          image: '',
+          image_data: '',
           content_type: '',
         };
         knex.insert(emptyImage).into('images').returning('*').then((images) => {
