@@ -1,5 +1,11 @@
 import _ from 'lodash';
 import knex from '../../config.js';
+import {
+  getAllEvents,
+  getEventsDataWithJoin,
+  getOneEventById,
+  getEventDataByEventIdWithJoin,
+} from '../queries/events';
 import { createEventSchema, updateEventSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
@@ -42,42 +48,13 @@ export const createEvent = (req, res) => {
 };
 
 export const getEvents = (req, res) => {
-  knex.select('*').from('events').then((events) => {
+  getAllEvents().then((events) => {
     if (_.isEmpty(events)) {
       res.json({
-        warning: 'Events not found',
+        error: 'Events not found',
       });
     } else {
-      knex('events')
-      .select(
-        'events.id as event_id',
-        'events.datetime as event_datetime',
-        'events.title as event_title',
-        'events.created_at as event_created_at',
-      )
-      .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
-      .select(
-        'playgrounds.id as playground_id',
-        'playgrounds.name as playground_name',
-        'playgrounds.description as playground_description',
-        'playgrounds.images as playground_images',
-        'playgrounds.address as playground_address',
-        'playgrounds.latitude as playground_latitude',
-        'playgrounds.longitude as playground_longitude',
-        'playgrounds.creator as playground_creator',
-      )
-      .innerJoin('users','creator_id', 'users.id' )
-      .select(
-        'users.id as creator_id',
-        'users.name as creator_name',
-        'users.email as creator_email',
-        'users.phone as creator_phone',
-      )
-      .leftJoin('images', 'users.image', 'images.id')
-      .select(
-        knex.raw('CONCAT(images.content_type, images.image_data) as creator_image'),
-      )
-      .then((data) => {
+        getEventsDataWithJoin().then((data) => {
         const sortedData = _.sortBy(data, (item) => { return item.event_datetime; }).reverse();
           res.status(200).json(sortedData);
         });
@@ -94,49 +71,13 @@ export const getEvents = (req, res) => {
 export const getSingleEvent = (req, res) => {
   const id = req.params.id;
 
-  knex.first('*').from('events').where('id', id).then((event) => {
+  getOneEventById(id).then((event) => {
     if (_.isEmpty(event)) {
       res.json({
-        warning: 'Event not found',
+        error: 'Event not found',
       });
     } else {
-      knex('events')
-      .first(
-        'events.id as event_id',
-        'events.datetime as event_datetime',
-        'events.title as event_title',
-        'events.created_at as event_created_at',
-      )
-      .where('events.id', id)
-      .groupBy('events.id')
-      .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
-      .select(
-        'playgrounds.id as playground_id',
-        'playgrounds.name as playground_name',
-        'playgrounds.description as playground_description',
-        'playgrounds.images as playground_images',
-        'playgrounds.address as playground_address',
-        'playgrounds.latitude as playground_latitude',
-        'playgrounds.longitude as playground_longitude',
-        'playgrounds.creator as playground_creator',
-      )
-      .groupBy('playgrounds.id')
-      .innerJoin('users','creator_id', 'users.id' )
-      .select(
-        'users.id as creator_id',
-        'users.name as creator_name',
-        'users.email as creator_email',
-        'users.phone as creator_phone',
-      )
-      .groupBy('users.id')
-      .leftJoin('images', 'users.image', 'images.id')
-      .select(
-        knex.raw('CONCAT(images.content_type, images.image_data) as creator_image'),
-      )
-      .groupBy('images.id')
-      .leftJoin('users_events', 'events.id', 'users_events.event_id')
-      .count('user_id as subscribed_users')
-      .then((data) => {
+      getEventDataByEventIdWithJoin(id).then((data) => {
           res.status(200).json([data]);
         });
     }

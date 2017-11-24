@@ -1,7 +1,14 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import knex from '../../config';
 import _ from 'lodash';
+import {
+  createNewUser,
+  getImageById,
+  getUserByEmail,
+  createUserProfileImage,
+} from '../queries/users';
+import { getEventIdByUserId } from '../queries/events';
+import { getUserFavoritePlaygroundsByUserId } from '../queries/playgrounds';
 import  { signInSchema, signUpSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
@@ -12,17 +19,11 @@ export const signIn = (req, res) => {
   const validateResult = validate(signInSchema, values);
 
   if (_.isEmpty(validateResult)) {
-    knex.first('*').from('users').where('email', email).then((user) => {
+    getUserByEmail(email).then((user) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            const getUserImage = () => knex('images').select('*').where('id', user.image);
-            const getUserSubscribedEvents = () => knex('users_events')
-              .select('event_id').where('user_id', user.id);
-            const getUserFavoritePlaygrounds = () => knex('users_favorite_playgrounds')
-              .select('playground_id').where('user_id', user.id);
-
-            Promise.all([getUserSubscribedEvents(), getUserFavoritePlaygrounds(), getUserImage()])
+            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageById(user.image)])
             .then((result) => {
                 const token = jwt.sign({
                   user: user.email,
@@ -80,13 +81,13 @@ export const signUp = (req, res) => {
   const validateResult = validate(signUpSchema, values);
 
   if (_.isEmpty(validateResult)) {
-    knex.select('*').from('users').where('email', email).then((users) => {
+    getUserByEmail(email).then((users) => {
       if(_.isEmpty(users)) {
         const emptyImage = {
           image_data: '',
           content_type: '',
         };
-        knex.insert(emptyImage).into('images').returning('*').then((images) => {
+        createUserProfileImage(emptyImage).then((images) => {
           const imageId = images[0].id;
           const hash = bcrypt.hashSync(password, 10);
           const newUser = {
@@ -99,7 +100,7 @@ export const signUp = (req, res) => {
             updated_at: new Date(),
           };
 
-          knex.insert(newUser).into('users').then(() => { res.status(200).json({}); });
+          createNewUser(newUser).then(() => { res.status(200).json({}); });
         });
       } else {
         res.json({

@@ -1,5 +1,9 @@
 import knex from '../../config';
 import _ from 'lodash';
+import {
+  getAllPlaygrounds,
+  getPlaygroundById,
+} from '../queries/playgrounds';
 import { createPlaygroundSchema, updatePlaygroundSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
@@ -47,7 +51,7 @@ export const createPlayground = (req, res) => {
 };
 
 export const getPlaygrounds = (req, res) => {
-  knex.select('*').from('playgrounds').then((playgrounds) => {
+  getAllPlaygrounds().then((playgrounds) => {
     if (_.isEmpty(playgrounds)) {
       res.json({
         warning: 'Playgrounds not found',
@@ -67,13 +71,13 @@ export const getPlaygrounds = (req, res) => {
 export const getSinglePlayground = (req, res) => {
   const id = req.params.id;
 
-  knex.first('*').from('playgrounds').where('id', id).then((playground) => {
+  getPlaygroundById(id).then((playground) => {
     if (_.isEmpty(playground)) {
       res.json({
-        warning: 'Playground does\'t exist',
+        error: 'Playground does\'t exist',
       });
     } else {
-      res.json([playground]);
+      res.status(200).json([playground]);
     }
   })
   .catch((err) => {
