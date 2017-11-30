@@ -11,3 +11,9 @@ export const getFavoritePlaygrounds = (data) => knex('users_favorite_playgrounds
 export const updateFavoritePlayground = (data) => knex('users_favorite_playgrounds').insert(data);
 
 export const deleteFavoritePlayground = (data) => knex('users_favorite_playgrounds').select('*').where(data).del();
+
+export const getPlaygroundsByCoords = (data) => knex.select('*').from('playgrounds').where(data);
+
+export const createPlaygroundByData = (data) => knex.insert(data).into('playgrounds').returning('*');
+
+export const createImagesByData = (data) => knex.insert(data).into('images').returning('*');

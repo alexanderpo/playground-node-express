@@ -13,6 +13,7 @@ pids
 
 #Config
 /config.js
+/minio.js
 
 #Docker
 /docker-compose.yml

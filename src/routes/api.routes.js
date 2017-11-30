@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { signIn, signUp } from '../controllers/sign';
 import {
   updateUserProfile,
@@ -22,8 +23,22 @@ import {
   updateEvent,
   deleteEvent,
 } from '../controllers/events';
+import {
+  createImage,
+  getImage,
+  deleteImage,
+} from '../controllers/images';
 
 const apiRouter = Router();
+const upload = multer({ storage: multer.memoryStorage() });
+
+/* Images */
+
+apiRouter.post('/images', upload.single('image'), createImage);
+
+apiRouter.delete('/images/:imageId', deleteImage);
+
+apiRouter.get('/images/:imageId', getImage);
 
 /* Sign routes */
 apiRouter.post('/signin', signIn);

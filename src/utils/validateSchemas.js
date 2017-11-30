@@ -26,7 +26,6 @@ export const createPlaygroundSchema = Joi.object().keys({
   name: Joi.string().min(6).max(120).required().label('Playground title'),
   description: Joi.string().min(5).max(600).required().label('Playground description'),
   address: Joi.string().min(5).max(100).required().label('Playground address'),
-  images: Joi.array().items(Joi.string()).label('Playground images'),
   latitude: Joi.number().min(0).max(90).required().label('Latitude'),
   longitude: Joi.number().min(-180).max(180).required().label('Longitude'),
   creator: Joi.string().email().required().label('Playground creator'),

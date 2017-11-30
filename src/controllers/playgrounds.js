@@ -3,37 +3,51 @@ import _ from 'lodash';
 import {
   getAllPlaygrounds,
   getPlaygroundById,
+  getPlaygroundsByCoords,
+  createPlaygroundByData,
+  createImagesByData,
 } from '../queries/playgrounds';
 import { createPlaygroundSchema, updatePlaygroundSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
 export const createPlayground = (req, res) => {
   const { name, description, address, images, latitude, longitude, creator } = req.body;
-  const values = { name, description, address, images, latitude, longitude, creator };
+  const values = { name, description, address, latitude, longitude, creator };
   const validateResult = validate(createPlaygroundSchema, values);
 
-  // TODO: implement load images in to database
+  const coords = {
+    latitude: latitude,
+    longitude: longitude,
+  };
 
   if (_.isEmpty(validateResult)) {
-    knex.select('*').from('playgrounds').where('name', name).then((playground) => {
+    getPlaygroundsByCoords(coords).then((playground) => {
       if(_.isEmpty(playground)) {
-        const newPlayground = {
-          name: name,
-          description: description,
-          address: address,
-          images: images,
-          latitude: latitude,
-          longitude: longitude,
-          creator: creator, // email address
-          created_at: new Date(),
-          updated_at: new Date(),
-        };
-        knex.insert(newPlayground).into('playgrounds').returning('*').then((playground) => {
-          res.json(playground);
+        const pgImages = !_.isEmpty(images) ? images.map((image) => ({
+          minio_id: image.id,
+          original_name: image.originalName,
+        })) : [];
+
+        createImagesByData(pgImages).then((images) => {
+          const imagesIds = (images.rowCount !== null) ? images.map(image => image.id) : [];
+          const newPlayground = {
+            name: name,
+            description: description,
+            address: address,
+            images: imagesIds,
+            latitude: latitude,
+            longitude: longitude,
+            creator: creator, // email address
+            created_at: new Date(),
+            updated_at: new Date(),
+          };
+          createPlaygroundByData(newPlayground).then((playground) => {
+            res.json(playground);
+          });
         });
       } else {
         res.json({
-          warning: 'This playground already created',
+          error: 'Playground on this place already created',
         });
       }
     })
