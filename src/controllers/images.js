@@ -16,8 +16,9 @@ export const createImage = async (req, res) => {
 
 export const getImage = async (req, res) => {
   const { imageId } = req.params;
-  const photoStream = await getImageById(imageId);
-  return photoStream.pipe(res); // return normal image
+  const imageStream = await getImageById(imageId);
+
+  return imageStream.pipe(res);
 };
 
 export const deleteImage = async (req, res) => {

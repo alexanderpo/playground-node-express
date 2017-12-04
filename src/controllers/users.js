@@ -14,11 +14,11 @@ import {
   getEventDataByEventIdWithJoin,
 } from '../queries/events';
 import {
-  getPlaygroundById,
   getUserFavoritePlaygroundsByUserId,
   getFavoritePlaygrounds,
   updateFavoritePlayground,
   deleteFavoritePlayground,
+  getPlaygroundByIdWithMinioId,
 } from '../queries/playgrounds';
 import { updateUserProfileSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
@@ -104,7 +104,7 @@ export const getUserFavoritePlaygrounds = (req, res) => {
 
   getUserFavoritePlaygroundsByUserId(id).then((playgrounds) => {
     const ids = playgrounds.map(playground => playground.playground_id);
-    const playgroundPromises = ids.map(id => getPlaygroundById(id));
+    const playgroundPromises = ids.map(id => getPlaygroundByIdWithMinioId(id));
 
     Promise.all(playgroundPromises).then((results) => {
       if (!_.isEmpty(results)) {

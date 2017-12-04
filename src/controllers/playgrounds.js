@@ -6,6 +6,8 @@ import {
   getPlaygroundsByCoords,
   createPlaygroundByData,
   createImagesByData,
+  getImageMetaDataById,
+  getPlaygroundByIdWithMinioId,
 } from '../queries/playgrounds';
 import { createPlaygroundSchema, updatePlaygroundSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
@@ -71,7 +73,10 @@ export const getPlaygrounds = (req, res) => {
         warning: 'Playgrounds not found',
       });
     } else {
-      res.json(playgrounds);
+      const playgroundsWithMinioIds = playgrounds.map(playground => getPlaygroundByIdWithMinioId(playground.id));
+      Promise.all(playgroundsWithMinioIds).then((results) => {
+        res.status(200).json(results);
+      });
     }
   })
   .catch((err) => {
@@ -91,7 +96,16 @@ export const getSinglePlayground = (req, res) => {
         error: 'Playground does\'t exist',
       });
     } else {
-      res.status(200).json([playground]);
+      const imagesIds = playground.images;
+      const imagesMetaDataPromises = imagesIds.map(id => getImageMetaDataById(id));
+
+      Promise.all(imagesMetaDataPromises).then((results) => {
+        const minioIds = results.map(result => result.minio_id);
+        const detailPlayground = Object.assign({}, playground, {
+          images: minioIds,
+        });
+        res.status(200).json([detailPlayground]);
+      });
     }
   })
   .catch((err) => {
