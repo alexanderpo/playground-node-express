@@ -8,6 +8,7 @@ import {
   subscribeEventControl,
   getUserFavoritePlaygrounds,
   getUpcomingEvents,
+  updateUserProfileImage,
 } from '../controllers/users';
 import {
   getPlaygrounds,
@@ -47,6 +48,8 @@ apiRouter.post('/signup', signUp);
 
 /* Users routes */
 apiRouter.put('/users/:id', updateUserProfile);
+
+apiRouter.put('/users/:id/image', updateUserProfileImage);
 
 apiRouter.get('/users/:id/events', getUserEvents);
 

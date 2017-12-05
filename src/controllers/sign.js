@@ -3,9 +3,8 @@ import jwt from 'jsonwebtoken';
 import _ from 'lodash';
 import {
   createNewUser,
-  getImageById,
+  getImageMinioIdByPgId,
   getUserByEmail,
-  createUserProfileImage,
 } from '../queries/users';
 import { getEventIdByUserId } from '../queries/events';
 import { getUserFavoritePlaygroundsByUserId } from '../queries/playgrounds';
@@ -23,7 +22,7 @@ export const signIn = (req, res) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageById(user.image)])
+            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageMinioIdByPgId(user.image)])
             .then((result) => {
                 const token = jwt.sign({
                   user: user.email,
@@ -31,12 +30,10 @@ export const signIn = (req, res) => {
 
                 const subscribedEvents = result[0].map((event) => event.event_id);
                 const favoritePlaygrounds = result[1].map((playground) => playground.playground_id);
-                const imageContentType = result[2].map((image) => image.content_type);
-                const imageData = result[2].map((image) => image.image_data);
-                const userImage = imageContentType + imageData;
+                const imageMinioId = (result[2] === undefined || result[2] === null) ? null : result[2].minio_id;
 
                 const detailsUser = Object.assign({}, user, {
-                  image: userImage,
+                  image: imageMinioId,
                   subscribedEvents: subscribedEvents,
                   favoritePlaygrounds: favoritePlaygrounds,
                   token: token,
@@ -83,25 +80,18 @@ export const signUp = (req, res) => {
   if (_.isEmpty(validateResult)) {
     getUserByEmail(email).then((users) => {
       if(_.isEmpty(users)) {
-        const emptyImage = {
-          image_data: '',
-          content_type: '',
+        const hash = bcrypt.hashSync(password, 10);
+        const newUser = {
+          name: name,
+          email: email,
+          hash: hash,
+          phone: phone,
+          image: null,
+          created_at: new Date(),
+          updated_at: new Date(),
         };
-        createUserProfileImage(emptyImage).then((images) => {
-          const imageId = images[0].id;
-          const hash = bcrypt.hashSync(password, 10);
-          const newUser = {
-            name: name,
-            email: email,
-            hash: hash,
-            phone: phone,
-            image: imageId,
-            created_at: new Date(),
-            updated_at: new Date(),
-          };
 
-          createNewUser(newUser).then(() => { res.status(200).json({}); });
-        });
+        createNewUser(newUser).then(() => { res.status(200).json({}); });
       } else {
         res.json({
           error: 'This email already used',

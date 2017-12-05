@@ -33,7 +33,10 @@ export const getEventsDataWithJoin = () => knex('events')
     'users.email as creator_email',
     'users.phone as creator_phone',
   )
-  .groupBy('users.id');
+  .groupBy('users.id')
+  .leftJoin('images as users_images', 'users_images.id', 'users.image')
+  .select('users_images.minio_id as creator_image')
+  .groupBy('users_images.minio_id');
 
 export const getUserEventsByUserId = (id) => knex('events')
   .select(
@@ -65,7 +68,10 @@ export const getUserEventsByUserId = (id) => knex('events')
     'users.email as creator_email',
     'users.phone as creator_phone',
   )
-  .groupBy('users.id');
+  .groupBy('users.id')
+  .leftJoin('images as users_images', 'users_images.id', 'users.image')
+  .select('users_images.minio_id as creator_image')
+  .groupBy('users_images.minio_id');
 
 export const getEventDataByEventIdWithJoin = (id) => knex('events')
   .first(
@@ -98,6 +104,9 @@ export const getEventDataByEventIdWithJoin = (id) => knex('events')
     'users.phone as creator_phone',
   )
   .groupBy('users.id')
+  .leftJoin('images as users_images', 'users_images.id', 'users.image')
+  .select('users_images.minio_id as creator_image')
+  .groupBy('users_images.minio_id')
   .leftJoin('users_events', 'events.id', 'users_events.event_id')
   .count('user_id as subscribed_users')
   .groupBy('users_events');

@@ -1,9 +1,13 @@
 import _ from 'lodash';
 import bcrypt from 'bcrypt';
 import {
-  updateUserProfileById,
-  updateUserProfileImageById,
+  createImageByData,
+  getUserById,
+  updateImageInUserProfile,
+  getImageMinioIdByPgId,
+  updateImageById,
   getUserHashById,
+  updateUserProfileById,
 } from '../queries/users';
 import {
   getUserEventsByUserId,
@@ -23,43 +27,62 @@ import {
 import { updateUserProfileSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
+export const updateUserProfileImage = (req, res) => {
+  const id = req.params.id;
+  const newImage = {
+    minio_id: req.body.minioId,
+    original_name: req.body.originalName,
+  };
+
+  const sendDetailsUserAfterUpdateImage = (newImageId) => {
+    updateImageInUserProfile(id, newImageId).then((results) => {
+      getImageMinioIdByPgId(results[0].image).then((image) => {
+        const detailsUser = Object.assign({}, results[0], {
+          image: image.minio_id,
+        });
+        res.status(200).json(detailsUser);
+      });
+    });
+  };
+
+  getUserById(id).then((user) => {
+    if (user.image === null) {
+      createImageByData(newImage).then((images) => {
+        sendDetailsUserAfterUpdateImage(images[0].id);
+      });
+    } else {
+      updateImageById(user.id, newImage).then((images) => {
+        sendDetailsUserAfterUpdateImage(images[0].id);
+      });
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json({
+      error: err,
+    });
+  });
+};
+
 export const updateUserProfile = (req, res) => {
   const id = req.params.id;
-  const { name, phone, image, password, isPasswordChange } = req.body;
+  const { name, phone, password, isPasswordChange } = req.body;
   const values = { name, phone, password, isPasswordChange };
   const validateResult = validate(updateUserProfileSchema, values);
 
   const oldHash = getUserHashById(id);
   const newHash = (isPasswordChange === true) ? bcrypt.hashSync(password, 10) : oldHash.hash;
 
-  const regexContentType = /^data:image\/\w+;base64,/;
-  const imageContentType = !image ? '' : regexContentType.exec(image)[0];
-  const imageContent = !image ? '' : image.replace(regexContentType, '');
-
   const data = {
     name: name,
     phone: phone,
     hash: newHash,
-    updated_at: new Date(),
   };
-  // IDEA: проверить на совпадение данных и если да то вернуть сообщение что нечего изменять
+
   if (_.isEmpty(validateResult)) {
     updateUserProfileById(id, data).then((users) => {
       if (!_.isEmpty(users)) {
-        const user = users[0];
-        const imageId = user.image;
-        const imageData = {
-          image_data: imageContent,
-          content_type: imageContentType,
-        };
-
-        updateUserProfileImageById(imageId, imageData).then((images) => {
-          const newImage = images[0].content_type + images[0].image_data;
-          const userData = Object.assign({}, user, {
-            image: newImage,
-          });
-          res.status(200).json(userData);
-        });
+        res.status(200).json(users[0]);
       } else {
         res.status(400).json({
           error: 'Nothing to update',
