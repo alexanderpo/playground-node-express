@@ -26,11 +26,11 @@ export const createEvent = (req, res) => {
           updated_at: new Date(),
         };
         knex.insert(newEvent).into('events').returning('*').then((event) => {
-          res.json(event);
+          res.status(200).json(event);
         });
       } else {
         res.json({
-          warning: 'Event with this title exist',
+          error: 'Event with this title exist',
         });
       }
     })

@@ -43,7 +43,7 @@ export const updatePlaygroundSchema = Joi.object().keys({
 
 export const createEventSchema = Joi.object().keys({
   title: Joi.string().min(6).max(120).required().label('Event title'),
-  datetime: Joi.date().iso().required().label('Event date'),
+  datetime: Joi.date().required().label('Event date'),
 });
 
 export const updateEventSchema = Joi.object().keys({
