@@ -1,6 +1,6 @@
 import knex from '../../config';
 
-export const getAllEvents = () => knex.select('*').from('events');
+export const getAllEvents = () => knex.select('*').from('events').where('events.datetime', '>=', new Date());
 
 export const getOneEventById = (id) => knex.first('*').from('events').where('id', id);
 
@@ -11,6 +11,7 @@ export const getEventsDataWithJoin = () => knex('events')
     'events.title as event_title',
     'events.created_at as event_created_at',
   )
+  .where('events.datetime', '>=', new Date())
   .groupBy('events.id')
   .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
   .select(
@@ -46,6 +47,7 @@ export const getUserEventsByUserId = (id) => knex('events')
     'events.created_at as event_created_at',
   )
   .where('creator_id', id)
+  .andWhere('events.datetime', '>=', new Date())
   .groupBy('events.id')
   .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
   .select(
@@ -81,6 +83,7 @@ export const getEventDataByEventIdWithJoin = (id) => knex('events')
     'events.created_at as event_created_at',
   )
   .where('events.id', id)
+  .andWhere('events.datetime', '>=', new Date())
   .groupBy('events.id')
   .innerJoin('playgrounds', 'playground_id', 'playgrounds.id')
   .select(
