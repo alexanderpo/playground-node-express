@@ -64,37 +64,43 @@ export const updateUserProfileImage = (req, res) => {
   });
 };
 
-export const updateUserProfile = (req, res) => {
+export const updateUserProfile = async (req, res) => {
   const id = req.params.id;
-  const { name, phone, password, isPasswordChange } = req.body;
-  const values = { name, phone, password, isPasswordChange };
+  const { name, phone, oldPassword, password, isPasswordChange } = req.body;
+  const values = { name, phone, oldPassword, password, isPasswordChange };
   const validateResult = validate(updateUserProfileSchema, values);
 
-  const oldHash = getUserHashById(id);
-  const newHash = (isPasswordChange === true) ? bcrypt.hashSync(password, 10) : oldHash.hash;
-
-  const data = {
-    name: name,
-    phone: phone,
-    hash: newHash,
-  };
-
   if (_.isEmpty(validateResult)) {
-    updateUserProfileById(id, data).then((users) => {
-      if (!_.isEmpty(users)) {
-        res.status(200).json(users[0]);
-      } else {
-        res.status(400).json({
-          error: 'Nothing to update',
-        });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        error: err,
+    const oldHash = await getUserHashById(id);
+    const isCompare = isPasswordChange ? await bcrypt.compare(oldPassword, oldHash.hash) : null;
+
+    if (isPasswordChange && !isCompare) {
+      res.status(400).json({
+        error: 'Old password doesn\'t match',
       });
-    });
+    } else {
+      const newHash = (isPasswordChange && isCompare) ? bcrypt.hashSync(password, 10) : oldHash.hash;
+      const data = {
+        name: name,
+        phone: phone,
+        hash: newHash,
+      };
+      updateUserProfileById(id, data).then((users) => {
+        if (!_.isEmpty(users)) {
+          res.status(200).json(users[0]);
+        } else {
+          res.status(400).json({
+            error: 'Nothing to update',
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          error: err,
+        });
+      });
+    }
   } else {
     res.status(400).json({
       error: validateResult,
