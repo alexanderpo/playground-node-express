@@ -21,3 +21,5 @@ export const createImageByData = (data) => knex.insert(data).into('images').retu
 export const updateImageById = (id, data) => knex.first('*').from('images').where('id', id).update(data).returning('*');
 
 export const updateImageInUserProfile = (id, newImageId) => knex.first('*').from('users').where('id', id).update({ image: newImageId }).returning('*');
+
+export const getCreatedEventsCountByUserId = (id) => knex('events').first().where('creator_id', id).count();

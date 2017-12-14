@@ -75,7 +75,7 @@ export const getUserEventsByUserId = (id) => knex('events')
   .select('users_images.minio_id as creator_image')
   .groupBy('users_images.minio_id');
 
-export const getEventDataByEventIdWithJoin = (id) => knex('events')
+export const getEventDataByEventIdWithJoin = async (id) => await knex('events')
   .first(
     'events.id as event_id',
     'events.datetime as event_datetime',

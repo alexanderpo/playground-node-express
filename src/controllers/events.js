@@ -55,7 +55,7 @@ export const getEvents = (req, res) => {
       });
     } else {
         getEventsDataWithJoin().then((data) => {
-          const sortedData = _.sortBy(data, (item) => { return item.event_datetime; }).reverse();
+          const sortedData = _.sortBy(data, (item) => { return item.event_datetime; });
           res.status(200).json(sortedData);
         });
     }

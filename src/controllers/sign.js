@@ -5,6 +5,7 @@ import {
   createNewUser,
   getImageMinioIdByPgId,
   getUserByEmail,
+  getCreatedEventsCountByUserId,
 } from '../queries/users';
 import { getEventIdByUserId } from '../queries/events';
 import { getUserFavoritePlaygroundsByUserId } from '../queries/playgrounds';
@@ -22,7 +23,7 @@ export const signIn = (req, res) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageMinioIdByPgId(user.image)])
+            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageMinioIdByPgId(user.image), getCreatedEventsCountByUserId(user.id)])
             .then((result) => {
                 const token = jwt.sign({
                   user: user.email,
@@ -31,11 +32,13 @@ export const signIn = (req, res) => {
                 const subscribedEvents = result[0].map((event) => event.event_id);
                 const favoritePlaygrounds = result[1].map((playground) => playground.playground_id);
                 const imageMinioId = (result[2] === undefined || result[2] === null) ? null : result[2].minio_id;
+                const createdEventsCount = result[3].count;
 
                 const detailsUser = Object.assign({}, user, {
                   image: imageMinioId,
                   subscribedEvents: subscribedEvents,
                   favoritePlaygrounds: favoritePlaygrounds,
+                  createdEvents: createdEventsCount,
                   token: token,
                 });
                 res.status(200).json(detailsUser);

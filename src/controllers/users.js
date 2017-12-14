@@ -107,7 +107,8 @@ export const getUserEvents = (req, res) => {
 
   getUserEventsByUserId(id).then((events) => {
       if(!_.isEmpty(events)) {
-        res.status(200).json(events);
+        const sortedEvents = _.sortBy(events, (item) => { return item.event_datetime; });
+        res.status(200).json(sortedEvents);
       } else {
         res.json({
           error: 'You don\'t have any events',
@@ -209,7 +210,7 @@ export const subscribeEventControl = (req, res) => {
   });
 };
 
-export const getUpcomingEvents = (req, res) => {
+export const getUpcomingEvents = async (req, res) => {
   const userId = req.params.id;
 
   getEventIdByUserId(userId).then((events) => {
@@ -222,7 +223,7 @@ export const getUpcomingEvents = (req, res) => {
       const eventsPromises = eventsIds.map(id => getEventDataByEventIdWithJoin(id));
 
       Promise.all(eventsPromises).then((result) => {
-        const sortedData = _.sortBy(result, (item) => { return item.event_datetime; }).reverse();
+        const sortedData = _.sortBy(result, (item) => { return item.event_datetime; });
         res.status(200).json(sortedData);
       });
     }
