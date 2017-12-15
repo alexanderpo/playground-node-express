@@ -164,18 +164,16 @@ export const deletePlayground = async (req, res) => {
   const deletePlaygroundPromise = (id) => knex.first('*').from('playgrounds').where('id', id).del();
 
   if (isIncludeEventsPlayground) {
-    res.json({
-      warning: 'You can\'t remove this playground because it\'s in event',
+    res.status(400).json({
+      error: 'You can\'t remove this playground because it\'s in event',
     });
   } else {
     Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
       if (result[1] !== 0 ) {
-        res.json({
-          message: 'Successfully deleted',
-        });
+        res.status(200).json({});
       } else {
-        res.json({
-          warning: 'Nothing to delete',
+        res.status(400).json({
+          error: 'Nothing to delete',
         });
       }
     })

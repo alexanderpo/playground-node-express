@@ -127,12 +127,10 @@ export const deleteEvent = (req, res) => {
 
   knex.first('*').from('events').where('id', id).del().then((count) => {
     if (count !== 0) {
-      res.json({
-        message: `Delete ${count} event`,
-      });
+      res.status(200).json({});
     } else {
-      res.json({
-        warning: 'Nothing to delete',
+      res.status(400).json({
+        error: 'Nothing to delete',
       });
     }
   })
