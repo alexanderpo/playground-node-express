@@ -21,16 +21,6 @@ export const getPlaygroundByIdWithMinioId = async (id) => await knex.first(
   .leftJoin('images', 'images.id', knex.raw('ANY(playgrounds.images)'))
   .groupBy('playgrounds.id');
 
-/*
-SELECT (
-  playgrounds.id,
-  array_agg(images.minio_id)
-)
-FROM playgrounds
-JOIN images ON (images.id = ANY(playgrounds.images))
-WHERE playgrounds.id IN (16, 18)
-GROUP BY playgrounds.id
-*/
 export const getUserFavoritePlaygroundsByUserId = (id) => knex('users_favorite_playgrounds').select('playground_id').where('user_id', id);
 
 export const getFavoritePlaygrounds = (data) => knex('users_favorite_playgrounds').select('*').where(data);
@@ -46,3 +36,5 @@ export const createPlaygroundByData = (data) => knex.insert(data).into('playgrou
 export const createImagesByData = (data) => knex.insert(data).into('images').returning('*');
 
 export const getImageMetaDataById = async (id) => await knex.first('*').from('images').where('id', id);
+
+export const getPlaygroundsByCreatorId = (id) => knex.select('*').from('playgrounds').where('created_by', id);

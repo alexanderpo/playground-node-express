@@ -23,6 +23,7 @@ import {
   updateFavoritePlayground,
   deleteFavoritePlayground,
   getPlaygroundByIdWithMinioId,
+  getPlaygroundsByCreatorId,
 } from '../queries/playgrounds';
 import { updateUserProfileSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
@@ -129,8 +130,28 @@ export const getUserEvents = (req, res) => {
   });
 };
 
+export const getUserPlaygrounds = (req, res) => {
+  const { id } = req.params;
+
+  getPlaygroundsByCreatorId(id).then((playgrounds) => {
+    if (!_.isEmpty(playgrounds)) {
+      res.status(200).json(playgrounds);
+    } else {
+      res.json({
+        error: 'You doesn\'t create playgrounds yet',
+      });
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500).json({
+      error: err,
+    });
+  });
+};
+
 export const getUserFavoritePlaygrounds = (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
 
   getUserFavoritePlaygroundsByUserId(id).then((playgrounds) => {
     const ids = playgrounds.map(playground => playground.playground_id);

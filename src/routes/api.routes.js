@@ -6,6 +6,7 @@ import {
   getUserEvents,
   userFavoritePlaygroundControl,
   subscribeEventControl,
+  getUserPlaygrounds,
   getUserFavoritePlaygrounds,
   getUpcomingEvents,
   updateUserProfileImage,
@@ -58,6 +59,8 @@ apiRouter.post('/users/events/subscribe', subscribeEventControl);
 apiRouter.get('/users/:id/events/upcoming', getUpcomingEvents);
 
 apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
+
+apiRouter.get('/users/:id/playgrounds', getUserPlaygrounds);
 
 apiRouter.get('/users/:id/favorite/playgrounds', getUserFavoritePlaygrounds);
 
