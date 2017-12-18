@@ -10,6 +10,7 @@ import {
   getUserFavoritePlaygrounds,
   getUpcomingEvents,
   updateUserProfileImage,
+  getOrganisedEvents,
 } from '../controllers/users';
 import {
   getPlaygrounds,
@@ -63,6 +64,8 @@ apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 apiRouter.get('/users/:id/playgrounds', getUserPlaygrounds);
 
 apiRouter.get('/users/:id/favorite/playgrounds', getUserFavoritePlaygrounds);
+
+apiRouter.get('/users/:id/events/organised', getOrganisedEvents);
 
 /* Playgrounds routes */
 apiRouter.get('/playgrounds', getPlaygrounds);

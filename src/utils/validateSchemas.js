@@ -30,6 +30,7 @@ export const createPlaygroundSchema = Joi.object().keys({
   latitude: Joi.number().min(0).max(90).required().label('Latitude'),
   longitude: Joi.number().min(-180).max(180).required().label('Longitude'),
   creator: Joi.string().email().required().label('Playground creator'),
+  createdBy: Joi.number().required().label('Creator id'),
 });
 
 export const updatePlaygroundSchema = Joi.object().keys({

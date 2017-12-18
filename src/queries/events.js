@@ -75,7 +75,7 @@ export const getUserEventsByUserId = (id) => knex('events')
   .select('users_images.minio_id as creator_image')
   .groupBy('users_images.minio_id');
 
-export const getEventDataByEventIdWithJoin = async (id) => await knex('events')
+export const getEventDataByEventIdWithJoin = (id) => knex('events')
   .first(
     'events.id as event_id',
     'events.datetime as event_datetime',
@@ -109,10 +109,9 @@ export const getEventDataByEventIdWithJoin = async (id) => await knex('events')
   .groupBy('users.id')
   .leftJoin('images as users_images', 'users_images.id', 'users.image')
   .select('users_images.minio_id as creator_image')
-  .groupBy('users_images.minio_id')
-  .leftJoin('users_events', 'events.id', 'users_events.event_id')
-  .count('user_id as subscribed_users')
-  .groupBy('users_events');
+  .groupBy('users_images.minio_id');
+
+export const getSubscribersCountByEventId = (id) => knex('users_events').count('user_id as subscribed_users').where('event_id', id);
 
 export const getEventIdByUserId = (id) => knex('users_events').select('event_id').where('user_id', id);
 
@@ -120,4 +119,4 @@ export const getUserEventsByData = (data) => knex('users_events').select('*').wh
 
 export const updateUserEventByData = (data) => knex('users_events').insert(data);
 
-export const removeUserEventByData = (data) => knex('users_events').select('*').where(data).del();
+export const removeUserEventByData = async (data) => await knex('users_events').select('*').where(data).del();

@@ -8,6 +8,7 @@ import {
   updateImageById,
   getUserHashById,
   updateUserProfileById,
+  getCreatedEventsCountByUserId,
 } from '../queries/users';
 import {
   getUserEventsByUserId,
@@ -252,7 +253,29 @@ export const getUpcomingEvents = async (req, res) => {
       Promise.all(eventsPromises).then((result) => {
         const sortedData = _.sortBy(result, (item) => { return item.event_datetime; });
         res.status(200).json(sortedData);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          error: err,
+        });
       });
     }
+  });
+};
+
+export const getOrganisedEvents = (req, res) => {
+  const { id } = req.params;
+
+  getCreatedEventsCountByUserId(id).then((result) => {
+    if (!_.isEmpty(result)) {
+      res.status(200).json(result);
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500).json({
+      error: err,
+    });
   });
 };

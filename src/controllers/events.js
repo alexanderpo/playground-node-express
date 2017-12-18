@@ -5,6 +5,7 @@ import {
   getEventsDataWithJoin,
   getOneEventById,
   getEventDataByEventIdWithJoin,
+  getSubscribersCountByEventId,
 } from '../queries/events';
 import { createEventSchema, updateEventSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
@@ -77,9 +78,19 @@ export const getSingleEvent = (req, res) => {
         error: 'Event not found',
       });
     } else {
-      getEventDataByEventIdWithJoin(id).then((data) => {
-          res.status(200).json([data]);
+      Promise.all([getEventDataByEventIdWithJoin(id), getSubscribersCountByEventId(id)]).then((results) => {
+        const data = results[0];
+        const dataWithSubscribersCount = Object.assign({}, data, {
+          subscribed_users: results[1][0].subscribed_users,
         });
+        res.status(200).json([dataWithSubscribersCount]);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.json({
+          error: err,
+        });
+      });
     }
   })
   .catch((err) => {
@@ -122,22 +133,31 @@ export const updateEvent = (req, res) => {
   }
 };
 
-export const deleteEvent = (req, res) => {
+export const deleteEvent = async (req, res) => {
   const id = req.params.id;
+  const deleteEventById = (id) => knex.first('*').from('events').where('id', id).del();
+  const getEventSubscribersById = async (id) => await knex('users_events').select('*').where('event_id', id);
+  const unsubscribeUsersAtEvent = async (id) => await knex('users_events').select('*').where('event_id', id).del();
 
-  knex.first('*').from('events').where('id', id).del().then((count) => {
-    if (count !== 0) {
-      res.status(200).json({});
-    } else {
-      res.status(400).json({
-        error: 'Nothing to delete',
+  const eventSubscribers = await getEventSubscribersById(id);
+  if (_.isEmpty(eventSubscribers)) {
+    deleteEventById(id).then(() => res.status(200).json({}));
+  } else {
+    Promise.all([unsubscribeUsersAtEvent(id), deleteEventById(id)]).then((results) => {
+      if (!_.isEmpty(results)) {
+        res.status(200).json({});
+      } else {
+        res.status(400).json({
+          error: 'Nothing to delete',
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({
+        error: err,
       });
-    }
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json({
-      error: err,
     });
-  });
+  }
+
 };

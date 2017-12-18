@@ -13,8 +13,8 @@ import { createPlaygroundSchema, updatePlaygroundSchema } from '../utils/validat
 import { validate } from '../utils/validation';
 
 export const createPlayground = (req, res) => {
-  const { name, description, address, images, latitude, longitude, creator } = req.body;
-  const values = { name, description, address, latitude, longitude, creator };
+  const { name, description, address, images, latitude, longitude, creator, createdBy } = req.body;
+  const values = { name, description, address, latitude, longitude, creator, createdBy };
   const validateResult = validate(createPlaygroundSchema, values);
 
   const coords = {
@@ -40,6 +40,7 @@ export const createPlayground = (req, res) => {
             latitude: latitude,
             longitude: longitude,
             creator: creator, // email address
+            created_by: createdBy,
             created_at: new Date(),
             updated_at: new Date(),
           };
@@ -70,7 +71,7 @@ export const getPlaygrounds = (req, res) => {
   getAllPlaygrounds().then((playgrounds) => {
     if (_.isEmpty(playgrounds)) {
       res.json({
-        warning: 'Playgrounds not found',
+        error: 'Playgrounds not found',
       });
     } else {
       const playgroundsWithMinioIds = playgrounds.map(playground => getPlaygroundByIdWithMinioId(playground.id));
@@ -155,21 +156,18 @@ export const updatePlayground = (req, res) => {
 };
 
 export const deletePlayground = async (req, res) => {
-  const id = req.params.id;
-  const getEventsQuery = knex.select().from('events').where('playground_id', id);
-  const isIncludeEventsPlayground = await getEventsQuery.then((result) => {
-    if (_.isEmpty(result)) { return false; } else { return true; }
-  });
-  const deleteUserFavoritePromise = (id) => knex.select('*').from('users_favorite_playgrounds').where('playground_id', id).del();
-  const deletePlaygroundPromise = (id) => knex.first('*').from('playgrounds').where('id', id).del();
+  const { id } = req.params;
 
-  if (isIncludeEventsPlayground) {
-    res.status(400).json({
-      error: 'You can\'t remove this playground because it\'s in event',
-    });
-  } else {
-    Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
-      if (result[1] !== 0 ) {
+  const getEventsIncludesPlayground = async (id) => await knex('events').select('*').where('playground_id', id);
+  const removePlaygroundById = (id) => knex('playgrounds').select('*').where('id', id).del();
+  const removeUsersFavoritePlaygroundById = (id) => knex('users_favorite_playgrounds').select('*').where('playground_id', id).del();
+  const removeEventById = async (id) => await knex.first('*').from('events').where('id', id).del();
+
+  const includesEvents = await getEventsIncludesPlayground(id);
+
+  if (_.isEmpty(includesEvents)) {
+    Promise.all([removeUsersFavoritePlaygroundById(id), removePlaygroundById(id)]).then((results) => {
+      if (!_.isEmpty(results)) {
         res.status(200).json({});
       } else {
         res.status(400).json({
@@ -183,5 +181,76 @@ export const deletePlayground = async (req, res) => {
         error: err,
       });
     });
+  } else {
+    const latestEvents = [];
+    const upcomingEvents = [];
+    includesEvents.map((event) => {
+      if (event.datetime >= new Date()) {
+        upcomingEvents.push(event);
+      } else {
+        latestEvents.push(event);
+      }
+    });
+    if (_.isEmpty(upcomingEvents)) {
+      const deleteLatestEventsPromises = latestEvents.map(event => removeEventById(event.id));
+      const deleteLatestEventsResult = await Promise.all(deleteLatestEventsPromises);
+
+      if (!_.isEmpty(deleteLatestEventsResult)) {
+        Promise.all([removeUsersFavoritePlaygroundById(id), removePlaygroundById(id)]).then((results) => {
+          if (!_.isEmpty(results)) {
+            res.status(200).json({});
+          } else {
+            res.status(400).json({
+              error: 'Nothing to delete',
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.json({
+            error: err,
+          });
+        });
+      }
+    } else {
+      res.status(400).json({
+        error: 'Event with this playground doesn\'t complete'
+      });
+    }
   }
 };
+
+/*
+const getEventsQuery = knex.select().from('events').where('playground_id', id);
+// const deleteEvent = (id) => knex.first('*').from('events').where('id', id).del();
+
+const isIncludeEventsPlayground = await getEventsQuery.then((result) => {
+  if (_.isEmpty(result)) { return false; } else { return true; }
+});
+const deleteUserFavoritePromise = (id) => knex.select('*').from('users_favorite_playgrounds').where('playground_id', id).del();
+const deletePlaygroundPromise = (id) => knex.first('*').from('playgrounds').where('id', id).del();
+
+if (isIncludeEventsPlayground) {
+  // проверить на дату и время ивента, и тогда удалить ивент и площадку
+  res.status(400).json({
+    error: 'You can\'t remove this playground because it\'s in event',
+  });
+} else {
+  Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
+    if (result[1] !== 0 ) {
+      res.status(200).json({});
+    } else {
+      res.status(400).json({
+        error: 'Nothing to delete',
+      });
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.json({
+      error: err,
+    });
+  });
+}
+
+*/
