@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import bcrypt from 'bcrypt';
+import moment from 'moment';
 import {
   createImageByData,
   getUserById,
@@ -277,5 +278,33 @@ export const getOrganisedEvents = (req, res) => {
     res.status(500).json({
       error: err,
     });
+  });
+};
+
+export const getUpcomingEventsByDate = (req, res) => {
+  const { id, date } = req.params;
+
+  getEventIdByUserId(id).then((events) => {
+    if (_.isEmpty(events)) {
+      res.json({
+        error: 'Don\'t have upcoming events',
+      });
+    } else {
+      const eventsIds = events.map(event => event.event_id);
+      const eventsPromises = eventsIds.map(id => getEventDataByEventIdWithJoin(id));
+      Promise.all(eventsPromises).then((result) => {
+        const filteredResult = _.filter(result, (item) => {
+          return moment(item.event_datetime).format('YYYY-MM-DD') === date;
+        });
+        const sortedData = _.sortBy(filteredResult, (item) => { return item.event_datetime; });
+        res.status(200).json(sortedData);
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          error: err,
+        });
+      });
+    }
   });
 };

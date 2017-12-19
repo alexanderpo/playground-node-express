@@ -9,6 +9,7 @@ import {
   getUserPlaygrounds,
   getUserFavoritePlaygrounds,
   getUpcomingEvents,
+  getUpcomingEventsByDate,
   updateUserProfileImage,
   getOrganisedEvents,
 } from '../controllers/users';
@@ -58,6 +59,8 @@ apiRouter.get('/users/:id/events', getUserEvents);
 apiRouter.post('/users/events/subscribe', subscribeEventControl);
 
 apiRouter.get('/users/:id/events/upcoming', getUpcomingEvents);
+
+apiRouter.get('/users/:id/events/upcoming/:date', getUpcomingEventsByDate);
 
 apiRouter.post('/users/favorite/playground', userFavoritePlaygroundControl);
 
