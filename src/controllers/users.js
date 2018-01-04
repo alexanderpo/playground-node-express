@@ -18,6 +18,7 @@ import {
   updateUserEventByData,
   removeUserEventByData,
   getEventDataByEventIdWithJoin,
+  getEventByEventIdWithoutImages,
 } from '../queries/events';
 import {
   getUserFavoritePlaygroundsByUserId,
@@ -252,7 +253,8 @@ export const getUpcomingEvents = async (req, res) => {
       const eventsPromises = eventsIds.map(id => getEventDataByEventIdWithJoin(id));
 
       Promise.all(eventsPromises).then((result) => {
-        const sortedData = _.sortBy(result, (item) => { return item.event_datetime; });
+        const actualData = _.filter(result, (item) => { return item !== undefined; });
+        const sortedData = _.sortBy(actualData, (item) => { return item.event_datetime; });
         res.status(200).json(sortedData);
       })
       .catch((err) => {
@@ -291,9 +293,11 @@ export const getUpcomingEventsByDate = (req, res) => {
       });
     } else {
       const eventsIds = events.map(event => event.event_id);
-      const eventsPromises = eventsIds.map(id => getEventDataByEventIdWithJoin(id));
+      const eventsPromises = eventsIds.map(id => getEventByEventIdWithoutImages(id));
+
       Promise.all(eventsPromises).then((result) => {
-        const filteredResult = _.filter(result, (item) => {
+        const actualData = _.filter(result, (item) => { return item !== undefined; });
+        const filteredResult = _.filter(actualData, (item) => {
           return moment(item.event_datetime).format('YYYY-MM-DD') === date;
         });
         const sortedData = _.sortBy(filteredResult, (item) => { return item.event_datetime; });
