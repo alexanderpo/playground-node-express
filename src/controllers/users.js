@@ -55,7 +55,8 @@ export const updateUserProfileImage = (req, res) => {
         sendDetailsUserAfterUpdateImage(images[0].id);
       });
     } else {
-      updateImageById(user.id, newImage).then((images) => {
+      updateImageById(user.image, newImage).then((images) => {
+        console.log(images, 'IMAGE AFTER UPDATE');
         sendDetailsUserAfterUpdateImage(images[0].id);
       });
     }
