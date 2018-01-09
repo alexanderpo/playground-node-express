@@ -46,6 +46,12 @@ export const updateUserProfileImage = (req, res) => {
         });
         res.status(200).json(detailsUser);
       });
+    })
+    .catch((err) => {
+      console.error(err, 'Update image in user profile error');
+      res.status(500).json({
+        error: err,
+      });
     });
   };
 
@@ -62,8 +68,8 @@ export const updateUserProfileImage = (req, res) => {
     }
   })
   .catch((err) => {
-    console.log(err);
-    res.json({
+    console.error(err, 'Get user by id error');
+    res.status(500).json({
       error: err,
     });
   });
@@ -100,7 +106,7 @@ export const updateUserProfile = async (req, res) => {
         }
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err, 'Update user profile error');
         res.status(500).json({
           error: err,
         });
@@ -127,8 +133,8 @@ export const getUserEvents = (req, res) => {
       }
   })
   .catch((err) => {
-    console.log(err);
-    res.json({
+    console.error(err, 'Get user events error');
+    res.status(500).json({
       error: err,
     });
   });
@@ -147,7 +153,7 @@ export const getUserPlaygrounds = (req, res) => {
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err, 'Get user playgrounds error');
     res.status(500).json({
       error: err,
     });
@@ -169,10 +175,16 @@ export const getUserFavoritePlaygrounds = (req, res) => {
           error: 'You don\'t have favorite playgrounds',
         });
       }
+    })
+    .catch((err) => {
+      console.error(err, 'Get playgrounds by id error');
+      res.status(500).json({
+        error: err,
+      });
     });
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err, 'Get user favorites playgrounds error');
     res.status(500).json({
       error: err,
     });
@@ -192,6 +204,12 @@ export const userFavoritePlaygroundControl = (req, res) => {
       res.status(200).json({
         favoritePlaygrounds: favoritePlaygrounds,
       });
+    })
+    .catch((err) => {
+      console.error(err, 'Get favorite playgrounds error');
+      res.status(500).json({
+        error: err,
+      });
     });
   };
 
@@ -203,7 +221,7 @@ export const userFavoritePlaygroundControl = (req, res) => {
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err, 'Get favorite playgrounds error');
     res.status(500).json({
       error: err,
     });
@@ -223,6 +241,12 @@ export const subscribeEventControl = (req, res) => {
       res.status(200).json({
         subscribedEvents: subscribedEvents,
       });
+    })
+    .catch((err) => {
+      console.error(err, 'Get event by user id error');
+      res.status(500).json({
+        error: err,
+      });
     });
   };
 
@@ -234,7 +258,7 @@ export const subscribeEventControl = (req, res) => {
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err, 'Get user events by data error');
     res.status(500).json({
       error: err,
     });
@@ -259,12 +283,18 @@ export const getUpcomingEvents = async (req, res) => {
         res.status(200).json(sortedData);
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err, 'Get events data error');
         res.status(500).json({
           error: err,
         });
       });
     }
+  })
+  .catch((err) => {
+    console.error(err, 'Get events by user id error');
+    res.status(500).json({
+      error: err,
+    });
   });
 };
 
@@ -277,7 +307,7 @@ export const getOrganisedEvents = (req, res) => {
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err, 'Get created events count error');
     res.status(500).json({
       error: err,
     });
@@ -305,11 +335,17 @@ export const getUpcomingEventsByDate = (req, res) => {
         res.status(200).json(sortedData);
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err, 'Get event data without images error');
         res.status(500).json({
           error: err,
         });
       });
     }
+  })
+  .catch((err) => {
+    console.error(err, 'Get event id by user id error');
+    res.status(500).json({
+      error: err,
+    });
   });
 };

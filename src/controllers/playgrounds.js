@@ -1,5 +1,6 @@
 import knex from '../../config';
 import _ from 'lodash';
+import moment from 'moment';
 import {
   getAllPlaygrounds,
   getPlaygroundById,
@@ -8,8 +9,12 @@ import {
   createImagesByData,
   getImageMetaDataById,
   getPlaygroundByIdWithMinioId,
+  getEventByPlaygroundIdWithoutImages,
 } from '../queries/playgrounds';
-import { createPlaygroundSchema, updatePlaygroundSchema } from '../utils/validateSchemas';
+import {
+  createPlaygroundSchema,
+  updatePlaygroundSchema,
+} from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
 export const createPlayground = (req, res) => {
@@ -47,6 +52,12 @@ export const createPlayground = (req, res) => {
           createPlaygroundByData(newPlayground).then((playground) => {
             res.json(playground);
           });
+        })
+        .catch((err) => {
+          console.error(err, 'Create images by data error');
+          res.json({
+            error: err,
+          });
         });
       } else {
         res.json({
@@ -55,7 +66,7 @@ export const createPlayground = (req, res) => {
       }
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err, 'Get playground by coords error');
       res.json({
         error: err,
       });
@@ -220,37 +231,27 @@ export const deletePlayground = async (req, res) => {
   }
 };
 
-/*
-const getEventsQuery = knex.select().from('events').where('playground_id', id);
-// const deleteEvent = (id) => knex.first('*').from('events').where('id', id).del();
+export const getEventsOnPlaygroundByDate = (req, res) => {
+  const { id, date } = req.params;
 
-const isIncludeEventsPlayground = await getEventsQuery.then((result) => {
-  if (_.isEmpty(result)) { return false; } else { return true; }
-});
-const deleteUserFavoritePromise = (id) => knex.select('*').from('users_favorite_playgrounds').where('playground_id', id).del();
-const deletePlaygroundPromise = (id) => knex.first('*').from('playgrounds').where('id', id).del();
-
-if (isIncludeEventsPlayground) {
-  // проверить на дату и время ивента, и тогда удалить ивент и площадку
-  res.status(400).json({
-    error: 'You can\'t remove this playground because it\'s in event',
-  });
-} else {
-  Promise.all([deleteUserFavoritePromise(id), deletePlaygroundPromise(id)]).then((result) => {
-    if (result[1] !== 0 ) {
-      res.status(200).json({});
-    } else {
-      res.status(400).json({
-        error: 'Nothing to delete',
+  getEventByPlaygroundIdWithoutImages(id).then((events) => {
+    if (_.isEmpty(events)) {
+      res.json({
+        error: 'Don\'t have upcoming events',
       });
+    } else {
+      const actualData = _.filter(events, (event) => { return event !== undefined; });
+      const filteredResult = _.filter(actualData, (item) => {
+        return moment(item.event_datetime).format('YYYY-MM-DD') === date;
+      });
+      const sortedData = _.sortBy(filteredResult, (item) => { return item.event_datetime; });
+      res.status(200).json(sortedData);
     }
   })
   .catch((err) => {
-    console.log(err);
-    res.json({
+    console.error(err, 'Get event id by playground id error');
+    res.status(500).json({
       error: err,
     });
   });
-}
-
-*/
+};

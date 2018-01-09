@@ -38,3 +38,19 @@ export const createImagesByData = (data) => knex.insert(data).into('images').ret
 export const getImageMetaDataById = async (id) => await knex.first('*').from('images').where('id', id);
 
 export const getPlaygroundsByCreatorId = (id) => knex.select('*').from('playgrounds').where('created_by', id);
+
+export const getEventByPlaygroundIdWithoutImages = (id) => knex('events')
+  .select(
+    'events.id as event_id',
+    'datetime as event_datetime',
+    'events.title as event_title',
+    'events.created_at as event_created_at',
+  )
+  .where('playground_id', id)
+  .andWhere('events.datetime', '>=', new Date())
+  .groupBy('events.id')
+  .innerJoin('users','creator_id', 'users.id' )
+  .select('users.name as creator_name')
+  .groupBy('users.id')
+  .leftJoin('users_events', 'users_events.event_id', 'events.id')
+  .count('user_id as subscribed_users');

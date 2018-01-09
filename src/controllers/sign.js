@@ -23,7 +23,12 @@ export const signIn = (req, res) => {
       if (!_.isEmpty(user)) {
         bcrypt.compare(password, user.hash, (err, isCompare) => {
           if (isCompare) {
-            Promise.all([getEventIdByUserId(user.id), getUserFavoritePlaygroundsByUserId(user.id), getImageMinioIdByPgId(user.image), getCreatedEventsCountByUserId(user.id)])
+            Promise.all([
+              getEventIdByUserId(user.id),
+              getUserFavoritePlaygroundsByUserId(user.id),
+              getImageMinioIdByPgId(user.image),
+              getCreatedEventsCountByUserId(user.id),
+            ])
             .then((result) => {
                 const token = jwt.sign({
                   user: user.email,
@@ -44,12 +49,11 @@ export const signIn = (req, res) => {
                 res.status(200).json(detailsUser);
             })
             .catch((err) => {
-              console.log(err);
+              console.error(err, 'SignIn error');
               res.status(500).json({
                 error: err,
               });
             });
-
           } else {
             res.status(400).json({
               error: 'Wrong password',
@@ -63,7 +67,7 @@ export const signIn = (req, res) => {
       }
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err, 'Get user by email error');
       res.status(500).json({
         error: err,
       });
@@ -94,7 +98,14 @@ export const signUp = (req, res) => {
           updated_at: new Date(),
         };
 
-        createNewUser(newUser).then(() => { res.status(200).json({}); });
+        createNewUser(newUser).then(() => {
+          res.status(200).json({});
+        }).catch((err) => {
+            console.error(err, 'Create new user error!');
+            res.status(500).json({
+              error: err,
+            });
+          });
       } else {
         res.json({
           error: 'This email already used',
@@ -102,7 +113,7 @@ export const signUp = (req, res) => {
       }
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err, 'Get user by email error!');
       res.status(500).json({
         error: err,
       });

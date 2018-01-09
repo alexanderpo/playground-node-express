@@ -19,6 +19,7 @@ import {
   createPlayground,
   updatePlayground,
   deletePlayground,
+  getEventsOnPlaygroundByDate,
 } from '../controllers/playgrounds';
 import {
   getEvents,
@@ -74,6 +75,8 @@ apiRouter.get('/users/:id/events/organised', getOrganisedEvents);
 apiRouter.get('/playgrounds', getPlaygrounds);
 
 apiRouter.get('/playgrounds/:id', getSinglePlayground);
+
+apiRouter.get('/playgrounds/:id/events/:date', getEventsOnPlaygroundByDate);
 
 apiRouter.post('/playgrounds', createPlayground);
 
