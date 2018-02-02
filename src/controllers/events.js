@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 import knex from '../../config.js';
 import {
   getAllEvents,
@@ -7,6 +8,7 @@ import {
   getEventDataByEventIdWithJoin,
   getSubscribersCountByEventId,
 } from '../queries/events';
+import { getEventByPlaygroundIdWithoutImages } from '../queries/playgrounds';
 import { createEventSchema, updateEventSchema } from '../utils/validateSchemas';
 import { validate } from '../utils/validation';
 
@@ -18,20 +20,33 @@ export const createEvent = (req, res) => {
   if (_.isEmpty(validateResult)) {
     knex.select('*').from('events').where('title', title).then((event) => {
       if(_.isEmpty(event)) {
-        const newEvent = {
-          title: title,
-          datetime: datetime,
-          creator_id: userId,
-          playground_id: playgroundId,
-          created_at: new Date(),
-          updated_at: new Date(),
-        };
-        knex.insert(newEvent).into('events').returning('*').then((event) => {
-          res.status(200).json(event);
+        getEventByPlaygroundIdWithoutImages(playgroundId).then((events) => {
+          const formatedDatetime = moment(datetime).format('YYYY-MM-DD-HH:mm');
+          const pgEventsDatetime = events.map((pgEvent) => moment(pgEvent.event_datetime).format('YYYY-MM-DD-HH:mm'));
+
+          const isIncludeDatetime = _.includes(pgEventsDatetime, formatedDatetime);
+
+          if (!isIncludeDatetime) {
+            const newEvent = {
+              title: title,
+              datetime: datetime,
+              creator_id: userId,
+              playground_id: playgroundId,
+              created_at: new Date(),
+              updated_at: new Date(),
+            };
+            knex.insert(newEvent).into('events').returning('*').then((event) => {
+              res.status(200).json(event);
+            });
+          } else {
+            res.status(400).json({
+              error: 'Event for this datetime already exist. Select another date.'
+            });
+          }
         });
       } else {
-        res.json({
-          error: 'Event with this title exist',
+        res.status(400).json({
+          error: 'Event with this title exist.',
         });
       }
     })
