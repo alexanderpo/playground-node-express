@@ -171,6 +171,7 @@ export const deletePlayground = async (req, res) => {
 
   const getEventsIncludesPlayground = async (id) => await knex('events').select('*').where('playground_id', id);
   const removePlaygroundById = (id) => knex('playgrounds').select('*').where('id', id).del();
+  const unsubscribeUsersAtEvents = async (id) => await knex('users_events').select('*').where('event_id', id).del();
   const removeUsersFavoritePlaygroundById = (id) => knex('users_favorite_playgrounds').select('*').where('playground_id', id).del();
   const removeEventById = async (id) => await knex.first('*').from('events').where('id', id).del();
 
@@ -202,9 +203,19 @@ export const deletePlayground = async (req, res) => {
         latestEvents.push(event);
       }
     });
+
     if (_.isEmpty(upcomingEvents)) {
+      const unsubscribeAtEventsPromises = latestEvents.map(event => unsubscribeUsersAtEvents(event.id));
       const deleteLatestEventsPromises = latestEvents.map(event => removeEventById(event.id));
-      const deleteLatestEventsResult = await Promise.all(deleteLatestEventsPromises);
+      const allEventsPromises = unsubscribeAtEventsPromises.push(deleteLatestEventsPromises);
+
+      const deleteLatestEventsResult = await Promise.all(allEventsPromises)
+      .catch((err) => {
+        console.log(err);
+        res.json({
+          error: err,
+        });
+      });
 
       if (!_.isEmpty(deleteLatestEventsResult)) {
         Promise.all([removeUsersFavoritePlaygroundById(id), removePlaygroundById(id)]).then((results) => {
@@ -225,7 +236,7 @@ export const deletePlayground = async (req, res) => {
       }
     } else {
       res.status(400).json({
-        error: 'Event with this playground doesn\'t complete'
+        error: 'Events with this playground doesn\'t complete'
       });
     }
   }
