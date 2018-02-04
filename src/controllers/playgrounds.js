@@ -171,6 +171,7 @@ export const deletePlayground = async (req, res) => {
 
   const getEventsIncludesPlayground = async (id) => await knex('events').select('*').where('playground_id', id);
   const removePlaygroundById = (id) => knex('playgrounds').select('*').where('id', id).del();
+  const getSubscribedUsersByEventId = async (id) => await knex('users_events').first('user_id').where('event_id', id);
   const unsubscribeUsersAtEvents = async (id) => await knex('users_events').select('*').where('event_id', id).del();
   const removeUsersFavoritePlaygroundById = (id) => knex('users_favorite_playgrounds').select('*').where('playground_id', id).del();
   const removeEventById = async (id) => await knex.first('*').from('events').where('id', id).del();
@@ -205,11 +206,18 @@ export const deletePlayground = async (req, res) => {
     });
 
     if (_.isEmpty(upcomingEvents)) {
-      const unsubscribeAtEventsPromises = latestEvents.map(event => unsubscribeUsersAtEvents(event.id));
-      const deleteLatestEventsPromises = latestEvents.map(event => removeEventById(event.id));
-      const allEventsPromises = unsubscribeAtEventsPromises.push(deleteLatestEventsPromises);
+      const subscribedUsersPromises = latestEvents.map(event => getSubscribedUsersByEventId(event.id));
+      const subscribedUsersResults = await Promise.all(subscribedUsersPromises);
+      const filteredSubscribedResults = _.filter(subscribedUsersResults, (user) => { return user !== undefined; });
+      const subscribedUsers = filteredSubscribedResults.map(user => user.user_id);
 
-      const deleteLatestEventsResult = await Promise.all(allEventsPromises)
+      const unsubscribeAtEventsPromises = _.isEmpty(subscribedUsers) ?
+      [] : latestEvents.map(event => unsubscribeUsersAtEvents(event.id));
+      // eslint-disable-next-line
+      const unsubscribeUsersResult = await Promise.all(unsubscribeAtEventsPromises);
+
+      const deleteLatestEventsPromises = latestEvents.map(event => removeEventById(event.id));
+      const deleteLatestEventsResult = await Promise.all(deleteLatestEventsPromises)
       .catch((err) => {
         console.log(err);
         res.json({
@@ -219,6 +227,7 @@ export const deletePlayground = async (req, res) => {
 
       if (!_.isEmpty(deleteLatestEventsResult)) {
         Promise.all([removeUsersFavoritePlaygroundById(id), removePlaygroundById(id)]).then((results) => {
+          console.log(results, ' delete results');
           if (!_.isEmpty(results)) {
             res.status(200).json({});
           } else {
